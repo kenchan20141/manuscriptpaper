@@ -42,15 +42,12 @@
         .copy-btn:hover {
             background-color: #1e87db;
         }
-        #ask-chen-sir {
-            background-color: #FF5733;
-            color: white;
+        #ask-chen {
+            background-color: orange;
             font-weight: bold;
-            padding: 12px 24px;
-            font-size: 16px;
         }
-        #ask-chen-sir:hover {
-            background-color: #e64e2e;
+        #ask-chen:hover {
+            background-color: #e69500;
         }
         .page {
             margin: 0 auto 10px;
@@ -135,47 +132,42 @@
             transform: translate(-50%, -50%);
             background: white;
             padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             z-index: 1000;
-            width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
+            width: 90%;
+            max-width: 400px;
         }
         #ask-panel h3 {
-            margin-top: 0;
-            color: #333;
+            margin: 0 0 10px;
+            text-align: center;
         }
-        #user-question {
+        #ask-panel textarea, #ask-panel select {
             width: 100%;
-            padding: 10px;
             margin: 10px 0;
+            padding: 5px;
             border: 1px solid #ccc;
-            border-radius: 5px;
-            resize: vertical;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        #tone-select {
-            width: 100%;
-            padding: 8px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        #submit-question, #close-panel {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        #ask-panel button {
+            padding: 8px 16px;
             margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
-        #submit-question {
+        #send-question {
             background-color: #4CAF50;
             color: white;
         }
-        #submit-question:hover {
+        #send-question:hover {
             background-color: #45a049;
         }
         #close-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
             background-color: #dc3545;
             color: white;
         }
@@ -184,10 +176,11 @@
         }
         #ai-response {
             margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
             padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            word-wrap: break-word;
+            border-radius: 4px;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -202,12 +195,10 @@
             <button id="copy-all" class="copy-btn">一鍵複製全文</button>
             <button id="export-pdf" class="action-btn" style="background-color: red;">導出PDF</button>
             <button id="eye-protection" class="action-btn">護眼模式</button>
-            <button id="ask-chen-sir" class="action-btn">向陳SIR發問</button>
+            <button id="ask-chen" class="action-btn">向陳SIR發問</button>
         </div>
     </div>
-    <div id="manuscript">
-        <!-- 頁面將動態添加 -->
-    </div>
+    <div id="manuscript"></div>
     <div id="word-count">字數：0</div>
     <div id="progress-overlay">
         <div id="progress-box">
@@ -218,12 +209,17 @@
     <div id="ask-panel">
         <h3>向陳SIR發問</h3>
         <textarea id="user-question" rows="3" placeholder="請輸入您的問題..."></textarea>
+        <label for="category-select">選擇文類：</label>
+        <select id="category-select">
+            <option value="narrative">敘事抒情</option>
+            <option value="argument">議論</option>
+        </select>
         <label for="tone-select">選擇語氣：</label>
         <select id="tone-select">
             <option value="serious">嚴肅正經</option>
             <option value="chen">陳SIR語氣</option>
         </select>
-        <button id="submit-question">提交</button>
+        <button id="send-question">發送</button>
         <div id="ai-response"></div>
         <button id="close-panel">關閉</button>
     </div>
@@ -243,19 +239,12 @@
         const API_URL = "https://chatapi.akash.network/api/v1/chat/completions";
         const MODEL = "DeepSeek-R1";
 
-        // 筆記內容
-        const notes = `
-        敘事抒情筆記：必須用繁體字回應。必須參考以下筆記：「敘事抒情文佳作有以下特點：一、結構段重點與題目有嚴謹的邏輯關係；二、情節大要能突顯結構段重點；三，詳略剪裁恰當；四，文句密度合適（詞匯豐富、實詞為主而虛詞為副，但過猶不及，適時需要運用虛詞令文句錯落有致。）」
-        議論筆記：必須用繁體字回應。必須參考以下筆記：「議論文佳作有以下特點：內容必須扣題，而且：1. 論點清晰明確，直接回應題目；2. 論據與論點嚴謹扣連，引例涵蓋古今中外；3. 段內論據的詳略有幾種模式：兩個詳的論據，或一詳數略，或數略，因應段落論述需要而定，以製造變化；4. 論證合理、具體、嚴謹，能解釋論據與論點的關係。」
-        `;
+        // 教學筆記
+        const narrativeNote = `必須用繁體字。點評時，必須就上述生成或輸入的題目、結構段重點、情節大要，點評大綱內容是否扣題。必須從以下兩個角度點評：其一，點評「結構段重點與題目是否有關、有多大邏輯關係」；其二，點評「情節大要是否能突顯出結構段重點、寫作內容的詳略剪裁是否恰當，即是否有效突顯結構段重點（前提是結構段重點扣題，如不扣題，情節大要及寫作內容就肯定不扣題），點評時要注意寫作內容、結構段重點兩者與題目有沒有在顯性的邏輯關係，寫作內容要求的不只是取材情節可以與結構段重點及題目構成邏輯關係，更要用合適的情節詳略剪裁和扣題小段去突顯與該部份的邏輯關係，使寫作內容明確呼應結構段重點及題目。」若離題，範例不必根據原文離題內容改寫，而改寫部份必須包含扣題小段（部份句子直接呼應結構段重點或題目）。`;
+        const argumentNote = `必須用繁體字。點評時，必須就用家提供的內容去點評，不要捏造用家沒有輸入的內容作點評。須評估文章是否符合以下標準：1. 論點清晰明確，一語中的，能直接呼應題目；2. 論據與論點密切相關，全文論據涵蓋古今中外（不需要每段都有古今中外的例子，不要捏造用家沒有輸入的例子作點評，假如缺少例子，直言其問題即可。要注意過猾不及，充塞例子則感覺生硬）；3. 論證嚴謹，能具體解釋論據與論點的關係；4. 注意文句密度（詞匯量、實詞及虛詞比例，但過猶不及，過量使用實詞則生硬，適時加入虛詞，才能使文句節奏錯落有致）及修辭運用（宜適時運用排比和比喻）。`;
 
-        function getRows(page) {
-            return page % 2 === 1 ? 15 : 20;
-        }
-
-        function getCols() {
-            return 20;
-        }
+        function getRows(page) { return page % 2 === 1 ? 15 : 20; }
+        function getCols() { return 20; }
 
         function updateWordCount() {
             totalWords = 0;
@@ -264,9 +253,7 @@
                 const cols = getCols();
                 for (let row = 1; row <= rows; row++) {
                     for (let col = 1; col <= cols; col++) {
-                        const input = document.querySelector(
-                            `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
-                        );
+                        const input = document.querySelector(`input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`);
                         if (input && input.value) totalWords++;
                     }
                 }
@@ -361,9 +348,7 @@
                     if (nextPage > pageCount) addPage();
                 }
             }
-            return document.querySelector(
-                `input[data-page="${nextPage}"][data-row="${nextRow}"][data-col="${nextCol}"]`
-            );
+            return document.querySelector(`input[data-page="${nextPage}"][data-row="${nextRow}"][data-col="${nextCol}"]`);
         }
 
         function moveToPrevInput(currentInput) {
@@ -383,9 +368,7 @@
                     if (prevPage < 1) return;
                 }
             }
-            const prevInput = document.querySelector(
-                `input[data-page="${prevPage}"][data-row="${prevRow}"][data-col="${prevCol}"]`
-            );
+            const prevInput = document.querySelector(`input[data-page="${prevPage}"][data-row="${prevRow}"][data-col="${prevCol}"]`);
             if (prevInput) {
                 prevInput.value = '';
                 prevInput.focus();
@@ -405,9 +388,7 @@
                 for (let row = 1; row <= rows; row++) {
                     const rowData = [];
                     for (let col = 1; col <= cols; col++) {
-                        const input = document.querySelector(
-                            `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
-                        );
+                        const input = document.querySelector(`input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`);
                         rowData.push(input.value);
                     }
                     pageData.push(rowData);
@@ -437,9 +418,7 @@
                     const cols = getCols();
                     for (let row = 1; row <= rows; row++) {
                         for (let col = 1; col <= cols; col++) {
-                            const input = document.querySelector(
-                                `input[data-page="${pageIndex + 1}"][data-row="${row}"][data-col="${col}"]`
-                            );
+                            const input = document.querySelector(`input[data-page="${pageIndex + 1}"][data-row="${row}"][data-col="${col}"]`);
                             input.value = pageData[row - 1][col - 1];
                         }
                     }
@@ -459,9 +438,7 @@
                     let line = '';
                     let isEmptyFirstTwo = true;
                     for (let col = 1; col <= cols; col++) {
-                        const input = document.querySelector(
-                            `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
-                        );
+                        const input = document.querySelector(`input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`);
                         const char = input.value || '';
                         line += char;
                         if (col <= 2 && char !== '') isEmptyFirstTwo = false;
@@ -478,11 +455,7 @@
                 }
                 if (page < pageCount) text += '\n';
             }
-            navigator.clipboard.writeText(text).then(() => {
-                alert('全文已複製到剪貼板');
-            }).catch(err => {
-                console.error('複製失敗:', err);
-            });
+            navigator.clipboard.writeText(text).then(() => alert('全文已複製到剪貼板')).catch(err => console.error('複製失敗:', err));
         });
 
         const eyeProtectionBtn = document.getElementById('eye-protection');
@@ -515,12 +488,7 @@
             const pdf = new jspdf.jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
             for (let i = 0; i < totalPages; i++) {
                 const page = pages[i];
-                const canvas = await html2canvas(page, {
-                    scale: 2,
-                    useCORS: true,
-                    width: page.offsetWidth,
-                    height: page.offsetHeight
-                });
+                const canvas = await html2canvas(page, { scale: 2, useCORS: true, width: page.offsetWidth, height: page.offsetHeight });
                 const imgData = canvas.toDataURL('image/png');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -530,61 +498,79 @@
                 pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
                 progressBar.value = ((i + 1) / totalPages) * 100;
             }
-            pages.forEach((page, index) => {
-                page.style.boxShadow = originalBoxShadows[index];
-            });
+            pages.forEach((page, index) => page.style.boxShadow = originalBoxShadows[index]);
             pdf.save('manuscript.pdf');
             progressOverlay.style.display = 'none';
         });
 
-        // 「向陳SIR發問」功能
-        document.getElementById('ask-chen-sir').addEventListener('click', function() {
+        // 發問面板控制
+        document.getElementById('ask-chen').addEventListener('click', function() {
             document.getElementById('ask-panel').style.display = 'block';
         });
 
         document.getElementById('close-panel').addEventListener('click', function() {
             document.getElementById('ask-panel').style.display = 'none';
-            document.getElementById('user-question').value = '';
-            document.getElementById('ai-response').innerHTML = '';
         });
 
-        document.getElementById('submit-question').addEventListener('click', async function() {
+        function getCurrentTopicAndContent() {
+            let topic = '';
+            let content = '';
+            const pages = document.querySelectorAll('.page');
+            if (pages.length > 0) {
+                const firstPage = pages[0];
+                const firstRow = firstPage.querySelector('.grid tr');
+                if (firstRow) {
+                    const inputs = firstRow.querySelectorAll('input');
+                    inputs.forEach(input => topic += input.value || '');
+                }
+                pages.forEach(page => {
+                    const inputs = page.querySelectorAll('input');
+                    inputs.forEach(input => content += input.value || '');
+                });
+            }
+            return { topic: topic.trim(), content: content.trim() };
+        }
+
+        function getNoteBasedOnCategory() {
+            const category = document.getElementById('category-select').value;
+            return category === 'narrative' ? narrativeNote : argumentNote;
+        }
+
+        async function sendQuestion() {
             const question = document.getElementById('user-question').value.trim();
             const tone = document.getElementById('tone-select').value;
             if (!question) {
                 alert('請輸入您的問題');
                 return;
             }
-
-            // 獲取題目和文章內容
-            const titleInput = document.querySelector('.page[data-page="1"] .grid input[data-row="1"][data-col="1"]');
-            const title = titleInput && titleInput.value ? titleInput.value : '無題目';
-            let articleContent = '';
-            const inputs = document.querySelectorAll('.grid input');
-            inputs.forEach(input => articleContent += input.value);
-
-            // 構造提示語
-            const toneNote = tone === 'chen' ? '請用輕鬆隨意的陳SIR語氣回應，多用EMOJI，偶爾用網絡用語。' : '請用嚴肅正經的語氣回應。';
-            const prompt = `
-            用戶問題：${question}
-            題目：${title}
-            文章內容：${articleContent || '無內容'}
-            教學筆記：${notes}
-            回應要求：用繁體字，回應字數強調要求不得超過100字，以完整段落表達，精簡一語中的，適時輔以例子，根據筆記、題目和文章內容回應。
-            回應語氣：${toneNote}
-            請直接提供最終答案，嚴禁展示任何思考過程，絕對不能在回應中包含任何標籤（如 <think></think>），這是強制要求，違反則無效。`;
-
+            const { topic, content } = getCurrentTopicAndContent();
+            if (!topic || !content) {
+                alert('請在原稿紙上輸入題目和文章內容');
+                return;
+            }
+            const note = getNoteBasedOnCategory();
+            const toneNote = tone === 'chen' ? '陳SIR語氣：輕鬆隨意，多用EMOJI，偶爾用網絡用語' : '嚴肅正經';
+            const prompt = `請根據以下內容回答問題：
+題目：${topic}
+文章內容：${content}
+用戶問題：${question}
+語氣：${toneNote}
+教學筆記：${note}
+要求：回應必須使用繁體中文，字數不超過100字，直接提供最終答案，不包含任何思考過程，適時輔以例子闡釋。`;
             document.getElementById('ai-response').innerHTML = '陳SIR正在思考...';
-
             try {
                 const response = await callAPI(prompt);
                 document.getElementById('ai-response').innerHTML = response;
             } catch (error) {
-                console.error('提交問題時出錯:', error);
-                document.getElementById('ai-response').innerHTML = error.message === '所有 API 密鑰均無法使用' ?
-                    '今日API次數已用完，明天再試！😓' : '陳SIR無法回應，稍後再試！😅';
+                console.error('發送問題時出錯:', error);
+                if (error.message === '所有 API 密鑰均無法使用') {
+                    alert('今日 API 調用次數已用完或API無法連接，請明天再試');
+                } else {
+                    alert('回應生成失敗，請重試');
+                }
+                document.getElementById('ai-response').innerHTML = '';
             }
-        });
+        }
 
         async function callAPI(prompt) {
             let attempts = 0;
@@ -609,9 +595,7 @@
                     }
                     if (!response.ok) throw new Error(`API 調用失敗: ${response.statusText}`);
                     const data = await response.json();
-                    let content = data.choices[0].message.content.trim();
-                    if (!content) throw new Error("API 回應無內容");
-                    return content;
+                    return data.choices[0].message.content.trim();
                 } catch (error) {
                     console.error(error);
                     currentApiKeyIndex = (currentApiKeyIndex + 1) % API_KEYS.length;
@@ -620,6 +604,8 @@
                 }
             }
         }
+
+        document.getElementById('send-question').addEventListener('click', sendQuestion);
     </script>
 </body>
 </html>

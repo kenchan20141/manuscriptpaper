@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -191,9 +193,7 @@
         }
         .table-container {
             overflow-x: auto;
-            overflow-y: auto;
-            max-height: 300px;
-            max-width: 100%;
+            width: 100%;
         }
         .table-container table {
             width: 100%;
@@ -201,11 +201,10 @@
         }
         .table-container th, .table-container td {
             border: 1px solid #ccc;
-            padding: 5px;
+            padding: 10px;
             text-align: left;
             vertical-align: top;
             word-break: break-word;
-            box-sizing: border-box;
         }
         .table-container th:first-child, .table-container td:first-child {
             min-width: 50px;
@@ -213,36 +212,6 @@
         .table-container th:nth-child(2), .table-container td:nth-child(2),
         .table-container th:nth-child(3), .table-container td:nth-child(3) {
             min-width: 100px;
-        }
-        .outline-btn {
-            padding: 5px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            border: none;
-            border-radius: 3px;
-            margin: 2px;
-            transition: background-color 0.3s;
-        }
-        .add-segment-btn {
-            background-color: #007bff;
-            color: white;
-        }
-        .add-segment-btn:hover {
-            background-color: #0056b3;
-        }
-        .save-outline-btn {
-            background-color: #ffc107;
-            color: black;
-        }
-        .save-outline-btn:hover {
-            background-color: #e0a800;
-        }
-        .clear-outline-btn {
-            background-color: #6c757d;
-            color: white;
-        }
-        .clear-outline-btn:hover {
-            background-color: #5a6268;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -671,8 +640,8 @@
                     </table>
                 </div>
                 <div class="outline-buttons">
-                    <button class="outline-btn save-outline-btn" onclick="saveNarrativeOutline()">儲存</button>
-                    <button class="outline-btn clear-outline-btn" onclick="clearNarrativeOutline()">清空</button>
+                    <button class="save-btn" onclick="saveNarrativeOutline()">儲存</button>
+                    <button class="clear-btn" onclick="clearNarrativeOutline()">清空</button>
                 </div>`;
             document.getElementById('outline-area').innerHTML = tableHTML;
         }
@@ -711,10 +680,10 @@
             tableHTML += `
                     </table>
                 </div>
+                <button onclick="addArgumentStructureSegment()">新增結構段</button>
                 <div class="outline-buttons">
-                    <button class="outline-btn add-segment-btn" onclick="addArgumentStructureSegment()">新增結構段</button>
-                    <button class="outline-btn save-outline-btn" onclick="saveArgumentOutline()">儲存</button>
-                    <button class="outline-btn clear-outline-btn" onclick="clearArgumentOutline()">清空</button>
+                    <button class="save-btn" onclick="saveArgumentOutline()">儲存</button>
+                    <button class="clear-btn" onclick="clearArgumentOutline()">清空</button>
                 </div>`;
             document.getElementById('outline-area').innerHTML = tableHTML;
         }

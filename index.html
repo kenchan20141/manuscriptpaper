@@ -53,31 +53,16 @@
             background-color: #E64A19;
         }
         .save-btn {
-            background-color: #ffc107; /* 橙色 */
-            color: black;
-            font-size: 12px;
-            padding: 5px 10px;
+            background: #28a745;
         }
         .save-btn:hover {
-            background-color: #e0a800;
+            background: #218838;
         }
         .clear-btn {
-            background-color: #6c757d; /* 灰色 */
-            color: white;
-            font-size: 12px;
-            padding: 5px 10px;
+            background: #dc3545;
         }
         .clear-btn:hover {
-            background-color: #5a6268;
-        }
-        .add-segment-btn {
-            background-color: #007bff; /* 藍色 */
-            color: white;
-            font-size: 12px;
-            padding: 5px 10px;
-        }
-        .add-segment-btn:hover {
-            background-color: #0069d9;
+            background: #c82333;
         }
         .page {
             margin: 0 auto 10px;
@@ -166,7 +151,7 @@
             z-index: 1001;
             width: 400px;
             max-height: 80vh;
-            overflow: auto; /* 確保面板內部可以滾動 */
+            overflow-y: auto;
             display: none;
         }
         #ask-panel h2 {
@@ -206,20 +191,21 @@
         }
         .table-container {
             overflow-x: auto;
-            width: 100%;
+            overflow-y: auto;
+            max-height: 300px;
+            max-width: 100%;
         }
         .table-container table {
             width: 100%;
-            max-width: 100%; /* 確保表格不超過容器寬度 */
             border-collapse: collapse;
         }
         .table-container th, .table-container td {
             border: 1px solid #ccc;
-            padding: 10px;
+            padding: 5px;
             text-align: left;
             vertical-align: top;
             word-break: break-word;
-            min-width: 80px; /* 調整為更小的值 */
+            box-sizing: border-box;
         }
         .table-container th:first-child, .table-container td:first-child {
             min-width: 50px;
@@ -227,6 +213,36 @@
         .table-container th:nth-child(2), .table-container td:nth-child(2),
         .table-container th:nth-child(3), .table-container td:nth-child(3) {
             min-width: 100px;
+        }
+        .outline-btn {
+            padding: 5px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 3px;
+            margin: 2px;
+            transition: background-color 0.3s;
+        }
+        .add-segment-btn {
+            background-color: #007bff;
+            color: white;
+        }
+        .add-segment-btn:hover {
+            background-color: #0056b3;
+        }
+        .save-outline-btn {
+            background-color: #ffc107;
+            color: black;
+        }
+        .save-outline-btn:hover {
+            background-color: #e0a800;
+        }
+        .clear-outline-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        .clear-outline-btn:hover {
+            background-color: #5a6268;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -655,8 +671,8 @@
                     </table>
                 </div>
                 <div class="outline-buttons">
-                    <button class="save-btn" onclick="saveNarrativeOutline()">儲存</button>
-                    <button class="clear-btn" onclick="clearNarrativeOutline()">清空</button>
+                    <button class="outline-btn save-outline-btn" onclick="saveNarrativeOutline()">儲存</button>
+                    <button class="outline-btn clear-outline-btn" onclick="clearNarrativeOutline()">清空</button>
                 </div>`;
             document.getElementById('outline-area').innerHTML = tableHTML;
         }
@@ -695,10 +711,10 @@
             tableHTML += `
                     </table>
                 </div>
-                <button class="add-segment-btn" onclick="addArgumentStructureSegment()">新增結構段</button>
                 <div class="outline-buttons">
-                    <button class="save-btn" onclick="saveArgumentOutline()">儲存</button>
-                    <button class="clear-btn" onclick="clearArgumentOutline()">清空</button>
+                    <button class="outline-btn add-segment-btn" onclick="addArgumentStructureSegment()">新增結構段</button>
+                    <button class="outline-btn save-outline-btn" onclick="saveArgumentOutline()">儲存</button>
+                    <button class="outline-btn clear-outline-btn" onclick="clearArgumentOutline()">清空</button>
                 </div>`;
             document.getElementById('outline-area').innerHTML = tableHTML;
         }

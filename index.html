@@ -165,12 +165,6 @@
         #ask-panel button:hover {
             background: #45a049;
         }
-        #ask-panel .close-btn {
-            background: #dc3545;
-        }
-        #ask-panel .close-btn:hover {
-            background: #c82333;
-        }
         #ask-panel .drag {
             cursor: move;
         }
@@ -199,7 +193,6 @@
         .table-container th:nth-child(3), .table-container td:nth-child(3) {
             min-width: 100px;
         }
-        /* 調整表格內的 textarea 樣式 */
         .table-container td textarea {
             width: 100%;
             height: 100%;
@@ -207,7 +200,6 @@
             resize: none;
             overflow: hidden;
         }
-        /* 調整按鍵大小和顏色 */
         .outline-buttons {
             margin-top: 10px;
             display: flex;
@@ -218,12 +210,19 @@
             font-size: 12px;
             margin: 0;
         }
+        .add-segment-btn {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .add-segment-btn:hover {
+            background-color: #138496;
+        }
         .save-btn {
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
         }
         .save-btn:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
         .clear-btn {
             background-color: #6c757d;
@@ -232,25 +231,21 @@
         .clear-btn:hover {
             background-color: #5a6268;
         }
-        .add-segment-btn {
-            background-color: #17a2b8;
-            color: white;
-        }
-        .add-segment-btn:hover {
-            background-color: #138496;
-        }
-        /* 將關閉按鍵移到右上角 */
         #close-panel {
             position: absolute;
             top: 10px;
             right: 10px;
-            padding: 5px 10px;
-            font-size: 12px;
+            width: 30px;
+            height: 30px;
             background-color: #dc3545;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 50%;
+            font-size: 18px;
+            line-height: 30px;
+            text-align: center;
             cursor: pointer;
+            padding: 0;
         }
         #close-panel:hover {
             background-color: #c82333;
@@ -280,7 +275,7 @@
         </div>
     </div>
     <div id="ask-panel">
-        <button id="close-panel">關閉</button>
+        <button id="close-panel">×</button>
         <h2>向陳SIR發問</h2>
         <label for="category">文類：</label>
         <select id="category" onchange="toggleCategory()">

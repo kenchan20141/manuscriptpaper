@@ -42,12 +42,15 @@
         .copy-btn:hover {
             background-color: #1e87db;
         }
-        #ask-chen {
-            background-color: orange;
+        .ask-btn {
+            background-color: #FF5722;
+            color: white;
             font-weight: bold;
+            font-size: 16px;
+            padding: 12px 24px;
         }
-        #ask-chen:hover {
-            background-color: #e69500;
+        .ask-btn:hover {
+            background-color: #E64A19;
         }
         .page {
             margin: 0 auto 10px;
@@ -125,62 +128,51 @@
             background-color: #f0e5d5;
         }
         #ask-panel {
-            display: none;
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: white;
             padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-            width: 90%;
-            max-width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1001;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
         }
-        #ask-panel h3 {
-            margin: 0 0 10px;
+        #ask-panel h2 {
+            margin-top: 0;
             text-align: center;
         }
-        #ask-panel textarea, #ask-panel select {
+        #ask-panel select, #ask-panel textarea {
             width: 100%;
             margin: 10px 0;
-            padding: 5px;
+            padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box;
         }
         #ask-panel button {
-            padding: 8px 16px;
-            margin: 5px;
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer;
         }
-        #send-question {
-            background-color: #4CAF50;
-            color: white;
+        #ask-panel button:hover {
+            background: #45a049;
         }
-        #send-question:hover {
-            background-color: #45a049;
+        #ask-panel .close-btn {
+            background: #dc3545;
         }
-        #close-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #dc3545;
-            color: white;
+        #ask-panel .close-btn:hover {
+            background: #c82333;
         }
-        #close-panel:hover {
-            background-color: #c82333;
-        }
-        #ai-response {
-            margin-top: 10px;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 4px;
+        #ask-panel.drag {
+            cursor: move;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -195,7 +187,7 @@
             <button id="copy-all" class="copy-btn">一鍵複製全文</button>
             <button id="export-pdf" class="action-btn" style="background-color: red;">導出PDF</button>
             <button id="eye-protection" class="action-btn">護眼模式</button>
-            <button id="ask-chen" class="action-btn">向陳SIR發問</button>
+            <button id="ask-chen" class="ask-btn">向陳SIR發問</button>
         </div>
     </div>
     <div id="manuscript"></div>
@@ -207,21 +199,21 @@
         </div>
     </div>
     <div id="ask-panel">
-        <h3>向陳SIR發問</h3>
-        <textarea id="user-question" rows="3" placeholder="請輸入您的問題..."></textarea>
-        <label for="category-select">選擇文類：</label>
-        <select id="category-select">
-            <option value="narrative">敘事抒情</option>
-            <option value="argument">議論</option>
+        <h2>向陳SIR發問</h2>
+        <label for="category">文類：</label>
+        <select id="category">
+            <option value="敘事抒情">敘事抒情</option>
+            <option value="議論">議論</option>
         </select>
-        <label for="tone-select">選擇語氣：</label>
-        <select id="tone-select">
+        <label for="tone">語氣：</label>
+        <select id="tone">
             <option value="serious">嚴肅正經</option>
             <option value="chen">陳SIR語氣</option>
         </select>
-        <button id="send-question">發送</button>
-        <div id="ai-response"></div>
-        <button id="close-panel">關閉</button>
+        <textarea id="question" rows="4" placeholder="請在此輸入您的問題..."></textarea>
+        <button id="submit-question">提交問題</button>
+        <button id="close-panel" class="close-btn">關閉</button>
+        <div id="response"></div>
     </div>
 
     <script>
@@ -229,22 +221,23 @@
         const wordCountDiv = document.getElementById('word-count');
         const progressOverlay = document.getElementById('progress-overlay');
         const progressBar = document.getElementById('progress-bar');
+        const askPanel = document.getElementById('ask-panel');
         let pageCount = 0;
         let totalWords = 0;
         let isEyeProtection = false;
 
-        // API 配置信息
         const API_KEYS = ["sk-MoqwsgO8P9MEoCrftvdSYA"];
         let currentApiKeyIndex = 0;
         const API_URL = "https://chatapi.akash.network/api/v1/chat/completions";
         const MODEL = "DeepSeek-R1";
 
-        // 教學筆記
-        const narrativeNote = `敘事抒情筆記：必須用繁體字回應。必須參考以下筆記：「敘事抒情文佳作有以下特點：一、結構段重點與題目有嚴謹的邏輯關係；二、情節大要能突顯結構段重點；三，詳略剪裁恰當；四，文句密度合適（詞匯豐富、實詞為主而虛詞為副，但過猶不及，適時需要運用虛詞令文句錯落有致。）」`;
-        const argumentNote = `議論筆記：必須用繁體字回應。必須參考以下筆記：「議論文佳作有以下特點：內容必須扣題，而且：1. 論點清晰明確，直接回應題目；2. 論據與論點嚴謹扣連，引例涵蓋古今中外；3. 段內論據的詳略有幾種模式：兩個詳的論據，或一詳數略，或數略，因應段落論述需要而定，以製造變化；4. 論證合理、具體、嚴謹，能解釋論據與論點的關係。」`;
+        function getRows(page) {
+            return page % 2 === 1 ? 15 : 20;
+        }
 
-        function getRows(page) { return page % 2 === 1 ? 15 : 20; }
-        function getCols() { return 20; }
+        function getCols() {
+            return 20;
+        }
 
         function updateWordCount() {
             totalWords = 0;
@@ -253,7 +246,9 @@
                 const cols = getCols();
                 for (let row = 1; row <= rows; row++) {
                     for (let col = 1; col <= cols; col++) {
-                        const input = document.querySelector(`input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`);
+                        const input = document.querySelector(
+                            `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
+                        );
                         if (input && input.value) totalWords++;
                     }
                 }
@@ -348,7 +343,9 @@
                     if (nextPage > pageCount) addPage();
                 }
             }
-            return document.querySelector(`input[data-page="${nextPage}"][data-row="${nextRow}"][data-col="${nextCol}"]`);
+            return document.querySelector(
+                `input[data-page="${nextPage}"][data-row="${nextRow}"][data-col="${nextCol}"]`
+            );
         }
 
         function moveToPrevInput(currentInput) {
@@ -368,7 +365,9 @@
                     if (prevPage < 1) return;
                 }
             }
-            const prevInput = document.querySelector(`input[data-page="${prevPage}"][data-row="${prevRow}"][data-col="${prevCol}"]`);
+            const prevInput = document.querySelector(
+                `input[data-page="${prevPage}"][data-row="${prevRow}"][data-col="${prevCol}"]`
+            );
             if (prevInput) {
                 prevInput.value = '';
                 prevInput.focus();
@@ -388,7 +387,9 @@
                 for (let row = 1; row <= rows; row++) {
                     const rowData = [];
                     for (let col = 1; col <= cols; col++) {
-                        const input = document.querySelector(`input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`);
+                        const input = document.querySelector(
+                            `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
+                        );
                         rowData.push(input.value);
                     }
                     pageData.push(rowData);
@@ -418,7 +419,9 @@
                     const cols = getCols();
                     for (let row = 1; row <= rows; row++) {
                         for (let col = 1; col <= cols; col++) {
-                            const input = document.querySelector(`input[data-page="${pageIndex + 1}"][data-row="${row}"][data-col="${col}"]`);
+                            const input = document.querySelector(
+                                `input[data-page="${pageIndex + 1}"][data-row="${row}"][data-col="${col}"]`
+                            );
                             input.value = pageData[row - 1][col - 1];
                         }
                     }
@@ -438,7 +441,9 @@
                     let line = '';
                     let isEmptyFirstTwo = true;
                     for (let col = 1; col <= cols; col++) {
-                        const input = document.querySelector(`input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`);
+                        const input = document.querySelector(
+                            `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
+                        );
                         const char = input.value || '';
                         line += char;
                         if (col <= 2 && char !== '') isEmptyFirstTwo = false;
@@ -455,7 +460,11 @@
                 }
                 if (page < pageCount) text += '\n';
             }
-            navigator.clipboard.writeText(text).then(() => alert('全文已複製到剪貼板')).catch(err => console.error('複製失敗:', err));
+            navigator.clipboard.writeText(text).then(() => {
+                alert('全文已複製到剪貼板');
+            }).catch(err => {
+                console.error('複製失敗:', err);
+            });
         });
 
         const eyeProtectionBtn = document.getElementById('eye-protection');
@@ -488,7 +497,12 @@
             const pdf = new jspdf.jsPDF({ orientation: 'portrait', unit: 'px', format: 'a4' });
             for (let i = 0; i < totalPages; i++) {
                 const page = pages[i];
-                const canvas = await html2canvas(page, { scale: 2, useCORS: true, width: page.offsetWidth, height: page.offsetHeight });
+                const canvas = await html2canvas(page, {
+                    scale: 2,
+                    useCORS: true,
+                    width: page.offsetWidth,
+                    height: page.offsetHeight
+                });
                 const imgData = canvas.toDataURL('image/png');
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -503,73 +517,102 @@
             progressOverlay.style.display = 'none';
         });
 
-        // 發問面板控制
         document.getElementById('ask-chen').addEventListener('click', function() {
-            document.getElementById('ask-panel').style.display = 'block';
+            askPanel.style.display = 'block';
         });
 
         document.getElementById('close-panel').addEventListener('click', function() {
-            document.getElementById('ask-panel').style.display = 'none';
+            askPanel.style.display = 'none';
         });
 
-        function getCurrentTopicAndContent() {
-            let topic = '';
-            let content = '';
-            const pages = document.querySelectorAll('.page');
-            if (pages.length > 0) {
-                const firstPage = pages[0];
-                const firstRow = firstPage.querySelector('.grid tr');
-                if (firstRow) {
-                    const inputs = firstRow.querySelectorAll('input');
-                    inputs.forEach(input => topic += input.value || '');
-                }
-                pages.forEach(page => {
-                    const inputs = page.querySelectorAll('input');
-                    inputs.forEach(input => content += input.value || '');
-                });
+        let isDragging = false;
+        let offsetX, offsetY;
+        askPanel.addEventListener('mousedown', function(e) {
+            if (e.target === askPanel) {
+                isDragging = true;
+                offsetX = e.clientX - askPanel.getBoundingClientRect().left;
+                offsetY = e.clientY - askPanel.getBoundingClientRect().top;
+                askPanel.classList.add('drag');
             }
-            return { topic: topic.trim(), content: content.trim() };
-        }
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (isDragging) {
+                askPanel.style.left = (e.clientX - offsetX) + 'px';
+                askPanel.style.top = (e.clientY - offsetY) + 'px';
+                askPanel.style.transform = 'none';
+            }
+        });
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+            askPanel.classList.remove('drag');
+        });
 
-        function getNoteBasedOnCategory() {
-            const category = document.getElementById('category-select').value;
-            return category === 'narrative' ? narrativeNote : argumentNote;
-        }
-
-        async function sendQuestion() {
-            const question = document.getElementById('user-question').value.trim();
-            const tone = document.getElementById('tone-select').value;
+        document.getElementById('submit-question').addEventListener('click', async function() {
+            const category = document.getElementById('category').value;
+            const tone = document.getElementById('tone').value;
+            const question = document.getElementById('question').value.trim();
             if (!question) {
                 alert('請輸入您的問題');
                 return;
             }
-            const { topic, content } = getCurrentTopicAndContent();
-            if (!topic || !content) {
-                alert('請在原稿紙上輸入題目和文章內容');
-                return;
+
+            const manuscriptContent = getManuscriptContent();
+            const title = getTitleFromManuscript(manuscriptContent);
+
+            let prompt = `學生正在撰寫一篇${category}文章，題目是「${title}」。以下是學生已寫的內容：\n${manuscriptContent}\n\n學生的問題是：${question}\n\n請根據學生的問題和文章內容，提供簡潔的回應，不超過100字。`;
+
+            if (category === '敘事抒情') {
+                prompt += `\n\n參考筆記：學生需運用豐富物象增強故事生動性和真實感，物象應與題目緊密相關，表達情感與主題。應交替使用小物件、動作、對話和內心獨白，提高文句密度，但需控制詳略節奏，詳寫相關部分，略寫次要內容。`;
+            } else if (category === '議論') {
+                prompt += `\n\n參考筆記：論點需清晰明確，直接呼應題目；論據需與論點相關，涵蓋古今中外；論證方向需合理，解釋論據與論點關係；文句密度需適中，適時用排比和比喻，虛詞放緩節奏。`;
             }
-            const note = getNoteBasedOnCategory();
-            const toneNote = tone === 'chen' ? '陳SIR語氣：輕鬆隨意，多用EMOJI，偶爾用網絡用語' : '嚴肅正經';
-            const prompt = `請根據以下內容回答問題：
-題目：${topic}
-文章內容：${content}
-用戶問題：${question}
-語氣：${toneNote}
-教學筆記：${note}
-要求：回應必須使用繁體中文，字數不超過100字，直接提供最終答案，不包含任何思考過程，適時輔以例子闡釋。`;
-            document.getElementById('ai-response').innerHTML = '陳SIR正在思考...';
+
+            if (tone === 'chen') {
+                prompt += `\n\n請用陳SIR的語氣回應，輕鬆隨意，多用EMOJI，偶爾使用網絡用語。`;
+            } else {
+                prompt += `\n\n請用嚴肅正經的語氣回應。`;
+            }
+
+            prompt += `\n\n請直接提供最終答案，不包含任何思考過程或標籤。`;
+
+            document.getElementById('response').innerHTML = '陳SIR正在思考...';
+
             try {
                 const response = await callAPI(prompt);
-                document.getElementById('ai-response').innerHTML = response;
+                document.getElementById('response').innerHTML = response;
             } catch (error) {
-                console.error('發送問題時出錯:', error);
+                console.error('提交問題時出錯:', error);
                 if (error.message === '所有 API 密鑰均無法使用') {
                     alert('今日 API 調用次數已用完或API無法連接，請明天再試');
                 } else {
                     alert('回應生成失敗，請重試');
                 }
-                document.getElementById('ai-response').innerHTML = '';
+                document.getElementById('response').innerHTML = '';
             }
+        });
+
+        function getManuscriptContent() {
+            let content = '';
+            for (let page = 1; page <= pageCount; page++) {
+                const rows = getRows(page);
+                const cols = getCols();
+                for (let row = 1; row <= rows; row++) {
+                    for (let col = 1; col <= cols; col++) {
+                        const input = document.querySelector(
+                            `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
+                        );
+                        content += input.value || ' ';
+                    }
+                    content += '\n';
+                }
+                content += '\n';
+            }
+            return content.trim();
+        }
+
+        function getTitleFromManuscript(content) {
+            const lines = content.split('\n');
+            return lines[0].trim() || '無題';
         }
 
         async function callAPI(prompt) {
@@ -578,34 +621,41 @@
             while (attempts < maxAttempts) {
                 try {
                     const response = await fetch(API_URL, {
-                        method: "POST",
+                        method: 'POST',
                         headers: {
-                            "Authorization": `Bearer ${API_KEYS[currentApiKeyIndex]}`,
-                            "Content-Type": "application/json"
+                            'Authorization': `Bearer ${API_KEYS[currentApiKeyIndex]}`,
+                            'Content-Type': 'application/json'
                         },
                         body: JSON.stringify({
                             model: MODEL,
-                            messages: [{ role: "user", content: prompt }]
+                            messages: [{ role: 'user', content: prompt }]
                         })
                     });
+
                     if (response.status === 429) {
                         currentApiKeyIndex = (currentApiKeyIndex + 1) % API_KEYS.length;
                         attempts++;
                         continue;
                     }
-                    if (!response.ok) throw new Error(`API 調用失敗: ${response.statusText}`);
+
+                    if (!response.ok) {
+                        throw new Error(`API 調用失敗: ${response.statusText}`);
+                    }
+
                     const data = await response.json();
-                    return data.choices[0].message.content.trim();
+                    let content = data.choices[0].message.content.trim();
+                    content = content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+                    return content;
                 } catch (error) {
                     console.error(error);
                     currentApiKeyIndex = (currentApiKeyIndex + 1) % API_KEYS.length;
                     attempts++;
-                    if (attempts >= maxAttempts) throw new Error("所有 API 密鑰均無法使用");
+                    if (attempts >= maxAttempts) {
+                        throw new Error('所有 API 密鑰均無法使用');
+                    }
                 }
             }
         }
-
-        document.getElementById('send-question').addEventListener('click', sendQuestion);
     </script>
 </body>
 </html>

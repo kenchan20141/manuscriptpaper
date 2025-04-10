@@ -218,12 +218,18 @@
     </div>
     <div id="ask-panel">
         <h2>向陳SIR發問</h2>
+        <label for="ask-genre">選擇文體：</label>
+        <select id="ask-genre">
+            <option value="narrative">敘事抒情</option>
+            <option value="argument">議論</option>
+        </select>
         <textarea id="ask-question" placeholder="請輸入您的問題..."></textarea>
+        <label for="ask-tone">選擇語氣：</label>
         <select id="ask-tone">
             <option value="serious">嚴肅正經</option>
             <option value="chen">陳SIR語氣</option>
         </select>
-        <div id="outline-input" style="display: none;">
+        <div id="outline-input">
             <h3>文章大綱</h3>
             <textarea id="outline-text" placeholder="請輸入文章大綱..."></textarea>
         </div>
@@ -510,15 +516,13 @@
         const closeAskBtn = document.getElementById('close-ask');
         const submitAskBtn = document.getElementById('submit-ask');
         const askQuestionInput = document.getElementById('ask-question');
+        const askGenreSelect = document.getElementById('ask-genre');
         const askToneSelect = document.getElementById('ask-tone');
-        const outlineInput = document.getElementById('outline-input');
         const outlineText = document.getElementById('outline-text');
         const askResponseDiv = document.getElementById('ask-response');
 
         askBtn.addEventListener('click', function() {
             askPanel.style.display = 'block';
-            const title = getTitle();
-            outlineInput.style.display = (title.includes('論') || title.includes('談')) ? 'block' : 'none';
         });
 
         closeAskBtn.addEventListener('click', function() {
@@ -530,6 +534,7 @@
 
         submitAskBtn.addEventListener('click', async function() {
             const question = askQuestionInput.value.trim();
+            const genre = askGenreSelect.value;
             const tone = askToneSelect.value;
             const outline = outlineText.value.trim();
             if (!question) { alert('請輸入您的問題'); return; }
@@ -537,7 +542,7 @@
             try {
                 const title = getTitle();
                 const content = getContent();
-                const note = (title.includes('論') || title.includes('談')) ? argumentNote : narrativeNote;
+                const note = genre === 'narrative' ? narrativeNote : argumentNote;
                 const prompt = `用戶問題：${question}\n文章題目：${title}\n文章內容：${content}\n文章大綱：${outline}\n教學筆記：${note}\n回應語氣：${tone === 'chen' ? '陳SIR語氣' : '嚴肅正經'}\n請用繁體字回應，回應字數嚴格限制在100字以內，以完整段落和句子表達。`;
                 const response = await callAPI(prompt);
                 askResponseDiv.innerHTML = response;

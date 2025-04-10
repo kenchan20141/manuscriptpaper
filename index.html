@@ -52,6 +52,18 @@
         .ask-btn:hover {
             background-color: #E64A19;
         }
+        .save-btn {
+            background: #28a745;
+        }
+        .save-btn:hover {
+            background: #218838;
+        }
+        .clear-btn {
+            background: #dc3545;
+        }
+        .clear-btn:hover {
+            background: #c82333;
+        }
         .page {
             margin: 0 auto 10px;
             padding: 10px;
@@ -174,6 +186,31 @@
         #ask-panel.drag {
             cursor: move;
         }
+        #outline-area {
+            margin-top: 10px;
+        }
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+        }
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .table-container th, .table-container td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+        }
+        .table-container th:first-child, .table-container td:first-child {
+            min-width: 50px;
+        }
+        .table-container th:nth-child(2), .table-container td:nth-child(2),
+        .table-container th:nth-child(3), .table-container td:nth-child(3) {
+            min-width: 100px;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -210,6 +247,9 @@
             <option value="serious">嚴肅正經</option>
             <option value="chen">陳SIR語氣</option>
         </select>
+        <div id="outline-area">
+            <!-- Outline tables will be generated here -->
+        </div>
         <textarea id="question" rows="4" placeholder="請在此輸入您的問題..."></textarea>
         <button id="submit-question">提交問題</button>
         <button id="close-panel" class="close-btn">關閉</button>
@@ -519,6 +559,7 @@
 
         document.getElementById('ask-chen').addEventListener('click', function() {
             askPanel.style.display = 'block';
+            generateOutlineTable();
         });
 
         document.getElementById('close-panel').addEventListener('click', function() {
@@ -547,6 +588,148 @@
             askPanel.classList.remove('drag');
         });
 
+        document.getElementById('category').addEventListener('change', generateOutlineTable);
+
+        function generateOutlineTable() {
+            const category = document.getElementById('category').value;
+            const outlineArea = document.getElementById('outline-area');
+            outlineArea.innerHTML = '';
+            if (category === '敘事抒情') {
+                const savedData = localStorage.getItem('narrativeOutlineData');
+                let outlineData = [];
+                if (savedData) {
+                    try {
+                        outlineData = JSON.parse(savedData);
+                    } catch (e) {
+                        console.error('Error parsing narrativeOutlineData:', e);
+                    }
+                }
+                if (outlineData.length === 0) {
+                    outlineData = [
+                        { part: '起', focus: '', plot: '' },
+                        { part: '承', focus: '', plot: '' },
+                        { part: '轉', focus: '', plot: '' },
+                        { part: '合', focus: '', plot: '' }
+                    ];
+                }
+                let tableHTML = `
+                    <div class="table-container">
+                        <table id="narrativeOutlineTable">
+                            <tr><th>部份</th><th>結構段重點</th><th>情節大要</th></tr>`;
+                outlineData.forEach((item, index) => {
+                    tableHTML += `
+                        <tr>
+                            <td>${item.part}</td>
+                            <td><textarea id="narrativeFocus${index}" rows="3">${item.focus}</textarea></td>
+                            <td><textarea id="narrativePlot${index}" rows="3">${item.plot}</textarea></td>
+                        </tr>`;
+                });
+                tableHTML += `
+                        </table>
+                    </div>
+                    <div class="outline-buttons">
+                        <button class="save-btn" onclick="saveNarrativeOutline()">儲存</button>
+                        <button class="clear-btn" onclick="clearNarrativeOutline()">清空</button>
+                    </div>`;
+                outlineArea.innerHTML = tableHTML;
+            } else if (category === '議論') {
+                const savedData = localStorage.getItem('argumentOutlineData');
+                let outlineData = [];
+                if (savedData) {
+                    try {
+                        outlineData = JSON.parse(savedData);
+                    } catch (e) {
+                        console.error('Error parsing argumentOutlineData:', e);
+                    }
+                }
+                if (outlineData.length === 0) {
+                    outlineData = [
+                        { part: '起', point: '', evidence: '' },
+                        { part: '結構段一', point: '', evidence: '' },
+                        { part: '結構段二', point: '', evidence: '' },
+                        { part: '結構段三', point: '', evidence: '' },
+                        { part: '合', point: '', evidence: '' }
+                    ];
+                }
+                let tableHTML = `
+                    <div class="table-container">
+                        <table id="argumentOutlineTable">
+                            <tr><th>部份</th><th>論點</th><th>論據及論證</th></tr>`;
+                outlineData.forEach((item, index) => {
+                    tableHTML += `
+                        <tr>
+                            <td>${item.part}</td>
+                            <td><textarea id="argumentPoint${index}" rows="3">${item.point}</textarea></td>
+                            <td><textarea id="argumentEvidence${index}" rows="3">${item.evidence}</textarea></td>
+                        </tr>`;
+                });
+                tableHTML += `
+                        </table>
+                    </div>
+                    <div class="outline-buttons">
+                        <button class="save-btn" onclick="saveArgumentOutline()">儲存</button>
+                        <button class="clear-btn" onclick="clearArgumentOutline()">清空</button>
+                    </div>`;
+                outlineArea.innerHTML = tableHTML;
+            }
+        }
+
+        function saveNarrativeOutline() {
+            const table = document.getElementById('narrativeOutlineTable');
+            const rows = table.rows;
+            const outlineData = [];
+            for (let i = 1; i < rows.length; i++) {
+                const part = rows[i].cells[0].innerText;
+                const focusTextarea = rows[i].cells[1].querySelector('textarea');
+                const plotTextarea = rows[i].cells[2].querySelector('textarea');
+                const focus = focusTextarea ? focusTextarea.value.trim() : '';
+                const plot = plotTextarea ? plotTextarea.value.trim() : '';
+                outlineData.push({ part, focus, plot });
+            }
+            localStorage.setItem('narrativeOutlineData', JSON.stringify(outlineData));
+            alert('大綱已儲存');
+        }
+
+        function clearNarrativeOutline() {
+            if (confirm('確定要清空大綱嗎？')) {
+                const table = document.getElementById('narrativeOutlineTable');
+                const rows = table.rows;
+                for (let i = 1; i < rows.length; i++) {
+                    document.getElementById(`narrativeFocus${i - 1}`).value = '';
+                    document.getElementById(`narrativePlot${i - 1}`).value = '';
+                }
+                localStorage.removeItem('narrativeOutlineData');
+            }
+        }
+
+        function saveArgumentOutline() {
+            const table = document.getElementById('argumentOutlineTable');
+            const rows = table.rows;
+            const outlineData = [];
+            for (let i = 1; i < rows.length; i++) {
+                const part = rows[i].cells[0].innerText;
+                const pointTextarea = rows[i].cells[1].querySelector('textarea');
+                const evidenceTextarea = rows[i].cells[2].querySelector('textarea');
+                const point = pointTextarea ? pointTextarea.value.trim() : '';
+                const evidence = evidenceTextarea ? evidenceTextarea.value.trim() : '';
+                outlineData.push({ part, point, evidence });
+            }
+            localStorage.setItem('argumentOutlineData', JSON.stringify(outlineData));
+            alert('大綱已儲存');
+        }
+
+        function clearArgumentOutline() {
+            if (confirm('確定要清空大綱嗎？')) {
+                const table = document.getElementById('argumentOutlineTable');
+                const rows = table.rows;
+                for (let i = 1; i < rows.length; i++) {
+                    document.getElementById(`argumentPoint${i - 1}`).value = '';
+                    document.getElementById(`argumentEvidence${i - 1}`).value = '';
+                }
+                localStorage.removeItem('argumentOutlineData');
+            }
+        }
+
         document.getElementById('submit-question').addEventListener('click', async function() {
             const category = document.getElementById('category').value;
             const tone = document.getElementById('tone').value;
@@ -559,12 +742,19 @@
             const manuscriptContent = getManuscriptContent();
             const title = getTitleFromManuscript(manuscriptContent);
 
-            let prompt = `學生正在撰寫一篇${category}文章，題目是「${title}」。以下是學生已寫的內容：\n${manuscriptContent}\n\n學生的問題是：${question}\n\n請根據學生的問題和文章內容，提供簡潔的回應，不超過100字。`;
+            let outlineData = '';
+            if (category === '敘事抒情') {
+                outlineData = getNarrativeOutlineData();
+            } else if (category === '議論') {
+                outlineData = getArgumentOutlineData();
+            }
+
+            let prompt = `學生正在撰寫一篇${category}文章，題目是「${title}」。以下是學生已寫的內容：\n${manuscriptContent}\n\n以下是大綱內容：\n${outlineData}\n\n學生的問題是：${question}\n\n請根據學生的問題和文章內容，提供簡潔的回應，不超過100字。`;
 
             if (category === '敘事抒情') {
-                prompt += `\n\n參考筆記：必須用繁體字回應。敘事抒情文佳作有以下特點：一、結構段重點與題目有嚴謹的邏輯關係；二、情節大要能突顯結構段重點；三，詳略剪裁恰當；四，文句密度合適（詞匯豐富、實詞為主而虛詞為副，但過猶不及，適時需要運用虛詞令文句錯落有致；五，須運用豐富物象增強故事生動性和真實感，物象應與題目緊密相關，表達情感與主題。應交替使用小物件、動作、對話和內心獨白，提高文句密度，但需控制詳略節奏，詳寫相關部分，略寫次要內容。）`;
+                prompt += `\n\n參考筆記：必須用繁體字回應。敘事抒情文佳作有以下特點：一、結構段重點與題目有嚴謹的邏輯關係；二、情節大要能突顯結構段重點；三，詳略剪裁恰當；四，文句密度合適（詞匯豐富、實詞為主而虛詞為副，但過猶不及，適時需要運用虛詞令文句錯落有致）；五，須運用豐富物象增強故事生動性和真實感，物象應與題目緊密相關，表達情感與主題。應交替使用小物件、動作、對話和內心獨白，提高文句密度，但需控制詳略節奏，詳寫相關部分，略寫次要內容。`;
             } else if (category === '議論') {
-                prompt += `\n\n參考筆記：必須用繁體字回應。議論文佳作有以下特點：內容必須扣題，而且：1. 論點清晰明確，直接回應題目；2. 論據與論點嚴謹扣連，引例涵蓋古今中外；3. 段內論據的詳略有幾種模式：兩個詳的論據，或一詳數略，或數略，因應段落論述需要而定，以製造變化；4. 論證合理、具體、嚴謹，能解釋論據與論點的關係；5.文句密度需適中，適時用排比和比喻，虛詞放緩節奏。`;
+                prompt += `\n\n參考筆記：必須用繁體字回應。議論文佳作有以下特點：內容必須扣題，而且：1. 論點清晰明確，直接回應題目；2. 論據與論點嚴謹扣連，引例涵蓋古今中外；3. 段內論據的詳略有幾種模式：兩個詳的論據，或一詳數略，或數略，因應段落論述需要而定，以製造變化；4. 論證合理、具體、嚴謹，能解釋論據與論點的關係；5. 文句密度需適中，適時用排比和比喻，虛詞放緩節奏。`;
             }
 
             if (tone === 'chen') {
@@ -590,6 +780,34 @@
                 document.getElementById('response').innerHTML = '';
             }
         });
+
+        function getNarrativeOutlineData() {
+            const table = document.getElementById('narrativeOutlineTable');
+            if (!table) return '';
+            const rows = table.rows;
+            let data = '';
+            for (let i = 1; i < rows.length; i++) {
+                const part = rows[i].cells[0].innerText;
+                const focus = rows[i].cells[1].querySelector('textarea').value.trim();
+                const plot = rows[i].cells[2].querySelector('textarea').value.trim();
+                data += `${part} - 結構段重點: ${focus}, 情節大要: ${plot}\n`;
+            }
+            return data;
+        }
+
+        function getArgumentOutlineData() {
+            const table = document.getElementById('argumentOutlineTable');
+            if (!table) return '';
+            const rows = table.rows;
+            let data = '';
+            for (let i = 1; i < rows.length; i++) {
+                const part = rows[i].cells[0].innerText;
+                const point = rows[i].cells[1].querySelector('textarea').value.trim();
+                const evidence = rows[i].cells[2].querySelector('textarea').value.trim();
+                data += `${part} - 論點: ${point}, 論據及論證: ${evidence}\n`;
+            }
+            return data;
+        }
 
         function getManuscriptContent() {
             let content = '';

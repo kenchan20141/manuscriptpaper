@@ -145,6 +145,7 @@
         #ask-panel h2 {
             margin-top: 0;
             text-align: center;
+            margin-bottom: 10px;
         }
         #ask-panel select, #ask-panel textarea {
             width: 100%;
@@ -153,23 +154,73 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-        #ask-panel button {
-            width: 100%;
-            padding: 10px;
-            background: #4CAF50;
-            color: white;
+        #ask-panel .outline-buttons button {
+            width: auto;
+            padding: 5px 10px;
+            font-size: 12px;
+            margin: 0 5px;
             border: none;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
         }
-        #ask-panel button:hover {
-            background: #45a049;
+        .add-segment-btn {
+            background-color: #FFA500 !important; /* 橙色 */
+            color: white;
         }
-        #ask-panel .drag {
-            cursor: move;
+        .add-segment-btn:hover {
+            background-color: #e69500 !important;
         }
-        #outline-area {
+        .save-btn {
+            background-color: #800080 !important; /* 紫色 */
+            color: white;
+        }
+        .save-btn:hover {
+            background-color: #660066 !important;
+        }
+        .clear-btn {
+            background-color: #A52A2A !important; /* 棕色 */
+            color: white;
+        }
+        .clear-btn:hover {
+            background-color: #8B2323 !important;
+        }
+        #submit-question {
+            background-color: #007bff !important; /* 藍色 */
+            color: white;
+            width: 100%;
+            padding: 10px;
             margin-top: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #submit-question:hover {
+            background-color: #0056b3 !important;
+        }
+        #close-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            font-size: 16px;
+            background-color: #dc3545 !important; /* 紅色 */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+        #close-panel:hover {
+            background-color: #c82333 !important;
+        }
+        .outline-buttons {
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
         }
         .table-container {
             overflow-x: auto;
@@ -200,56 +251,6 @@
             resize: none;
             overflow: hidden;
         }
-        .outline-buttons {
-            margin-top: 10px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .outline-buttons button {
-            padding: 5px 10px;
-            font-size: 12px;
-            margin: 0;
-        }
-        .add-segment-btn {
-            background-color: #17a2b8;
-            color: white;
-        }
-        .add-segment-btn:hover {
-            background-color: #138496;
-        }
-        .save-btn {
-            background-color: #28a745;
-            color: white;
-        }
-        .save-btn:hover {
-            background-color: #218838;
-        }
-        .clear-btn {
-            background-color: #6c757d;
-            color: white;
-        }
-        .clear-btn:hover {
-            background-color: #5a6268;
-        }
-        #close-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 30px;
-            height: 30px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 18px;
-            line-height: 30px;
-            text-align: center;
-            cursor: pointer;
-            padding: 0;
-        }
-        #close-panel:hover {
-            background-color: #c82333;
-        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -275,7 +276,7 @@
         </div>
     </div>
     <div id="ask-panel">
-        <button id="close-panel">×</button>
+        <button id="close-panel">✕</button>
         <h2>向陳SIR發問</h2>
         <label for="category">文類：</label>
         <select id="category" onchange="toggleCategory()">
@@ -786,7 +787,7 @@
                 const point = pointTextarea ? pointTextarea.value.trim() : '';
                 const evidence = evidenceTextarea ? evidenceTextarea.value.trim() : '';
                 outlineData.push({ part, point, evidence });
-            }
+ cms            }
             localStorage.setItem('argumentOutlineData', JSON.stringify(outlineData));
             alert('大綱已儲存');
         }
@@ -825,7 +826,7 @@
             let prompt = `學生正在撰寫一篇${category}文章，題目是「${title}」。以下是學生已寫的內容：\n${manuscriptContent}\n\n以下是大綱內容：\n${outlineData}\n\n學生的問題是：${question}\n\n請根據學生的問題和文章內容，提供簡潔的回應，不超過100字。`;
 
             if (category === '敘事抒情') {
-                prompt += `\n\n參考筆記：必須用繁體字回應。敘事抒情文佳作有以下特點：一、結構段重點與題目有嚴謹的邏輯關係；二、情節大要能突顯結構段重點；三，詳略剪裁恰當；四，文句密度合適（詞匯豐富、實詞為主而虛詞為副，但過猶不及，適時需要運用虛詞令文句錯落有致）；五，須運用豐富物象增強故事生動性和真實感，物象應與題目緊密相關，表達情感與主題。應交替使用小物件、動作、對話和內心獨白，提高文句密度，但需控制詳略節奏，詳寫相關部分，略寫次要內容。`;
+                prompt += `\n\n參考筆記stand：必須用繁體字回應。敘事抒情文佳作有以下特點：一、結構段重點與題目有嚴謹的邏輯關係；二、情節大要能突顯結構段重點；三，詳略剪裁恰當；四，文句密度合適（詞匯豐富、實詞為主而虛詞為副，但過猶不及，適時需要運用虛詞令文句錯落有致）；五，須運用豐富物象增強故事生動性和真實感，物象應與題目緊密相關，表達情感與主題。應交替使用小物件、動作、對話和內心獨白，應避免以主角的身體部份作為主語或小物件，要提高文句密度，但需控制詳略節奏，詳寫相關部分，略寫次要內容；六，三線，即所謂「散敘」，有以下四點要注意：其一，三線的分類範疇相同；其二，三線或有層遞關係，或能從三個角度呈現同一個主題；其三，三線的情節發展不能過於相似；其四，所分之角度能突顯與主題相關的立意。「三線」例子如下：題目為「勇氣」，則可用「年少時的勇氣」為一線、「年青時的勇氣」為二線、「年老時的勇氣」為三線；又如以「重遊舊地所見有感」，則可用在故鄉的不同「地」所見作三線分類，例如老屋、後山等。必須確保每條線的「結構段重點」清晰點明三線的分類範疇、想突顯題目的甚麼要點、與題目如何扣連等，以及「合」能統攝總結全文立意`;
             } else if (category === '議論') {
                 prompt += `\n\n參考筆記：必須用繁體字回應。議論文佳作有以下特點：內容必須扣題，而且：1. 論點清晰明確，直接回應題目；2. 論據與論點嚴謹扣連，引例涵蓋古今中外；3. 段內論據的詳略有幾種模式：兩個詳的論據，或一詳數略，或數略，因應段落論述需要而定，以製造變化；4. 論證合理、具體、嚴謹，能解釋論據與論點的關係；5. 文句密度需適中，適時用排比和比喻，虛詞放緩節奏。`;
             }

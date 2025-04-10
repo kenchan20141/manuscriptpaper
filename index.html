@@ -53,16 +53,31 @@
             background-color: #E64A19;
         }
         .save-btn {
-            background: #28a745;
+            background-color: #ffc107; /* 橙色 */
+            color: black;
+            font-size: 12px;
+            padding: 5px 10px;
         }
         .save-btn:hover {
-            background: #218838;
+            background-color: #e0a800;
         }
         .clear-btn {
-            background: #dc3545;
+            background-color: #6c757d; /* 灰色 */
+            color: white;
+            font-size: 12px;
+            padding: 5px 10px;
         }
         .clear-btn:hover {
-            background: #c82333;
+            background-color: #5a6268;
+        }
+        .add-segment-btn {
+            background-color: #007bff; /* 藍色 */
+            color: white;
+            font-size: 12px;
+            padding: 5px 10px;
+        }
+        .add-segment-btn:hover {
+            background-color: #0069d9;
         }
         .page {
             margin: 0 auto 10px;
@@ -151,7 +166,7 @@
             z-index: 1001;
             width: 400px;
             max-height: 80vh;
-            overflow-y: auto;
+            overflow: auto; /* 確保面板內部可以滾動 */
             display: none;
         }
         #ask-panel h2 {
@@ -195,6 +210,7 @@
         }
         .table-container table {
             width: 100%;
+            max-width: 100%; /* 確保表格不超過容器寬度 */
             border-collapse: collapse;
         }
         .table-container th, .table-container td {
@@ -203,6 +219,7 @@
             text-align: left;
             vertical-align: top;
             word-break: break-word;
+            min-width: 80px; /* 調整為更小的值 */
         }
         .table-container th:first-child, .table-container td:first-child {
             min-width: 50px;
@@ -678,7 +695,7 @@
             tableHTML += `
                     </table>
                 </div>
-                <button onclick="addArgumentStructureSegment()">新增結構段</button>
+                <button class="add-segment-btn" onclick="addArgumentStructureSegment()">新增結構段</button>
                 <div class="outline-buttons">
                     <button class="save-btn" onclick="saveArgumentOutline()">儲存</button>
                     <button class="clear-btn" onclick="clearArgumentOutline()">清空</button>

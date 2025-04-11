@@ -120,12 +120,11 @@
             border-radius: 5px;
             text-align: center;
         }
-       #eye-protection {
-    background-color: #FFD700;
-    color: #333;
-    transition: none; /* 移除過渡效果，確保穩定 */
-}
-        
+        #eye-protection {
+            background-color: #FFD700;
+            color: #333;
+            transition: none;
+        }
         #ask-panel {
             position: fixed;
             top: 50%;
@@ -163,28 +162,28 @@
             cursor: pointer;
         }
         .add-segment-btn {
-            background-color: #FFA500 !important; /* 橙色 */
+            background-color: #FFA500 !important;
             color: white;
         }
         .add-segment-btn:hover {
             background-color: #e69500 !important;
         }
         .save-btn {
-            background-color: #800080 !important; /* 紫色 */
+            background-color: #800080 !important;
             color: white;
         }
         .save-btn:hover {
             background-color: #660066 !important;
         }
         .clear-btn {
-            background-color: #A52A2A !important; /* 棕色 */
+            background-color: #A52A2A !important;
             color: white;
         }
         .clear-btn:hover {
             background-color: #8B2323 !important;
         }
         #submit-question {
-            background-color: #007bff !important; /* 藍色 */
+            background-color: #007bff !important;
             color: white;
             width: 100%;
             padding: 10px;
@@ -203,7 +202,7 @@
             width: 20px;
             height: 20px;
             font-size: 16px;
-            background-color: #dc3545 !important; /* 紅色 */
+            background-color: #dc3545 !important;
             color: white;
             border: none;
             border-radius: 50%;
@@ -254,6 +253,71 @@
             width: 300px;
             padding: 5px;
             margin-top: 10px;
+        }
+        /* 音樂面板樣式 */
+        #music-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-sizing: border-box;
+        }
+        #music-panel.hidden {
+            transform: translateY(100%);
+        }
+        #music-panel select {
+            background-color: #444;
+            color: white;
+            border: none;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        #music-panel button {
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+        #music-panel input[type="range"] {
+            width: 200px;
+            margin: 0 10px;
+        }
+        #hide-music-panel {
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        @media (max-width: 600px) {
+            #music-panel {
+                padding: 5px;
+            }
+            #music-panel select {
+                font-size: 12px;
+                padding: 3px;
+            }
+            #music-panel button {
+                font-size: 16px;
+                padding: 0 5px;
+            }
+            #music-panel input[type="range"] {
+                width: 100px;
+            }
+            #hide-music-panel {
+                font-size: 14px;
+            }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -309,6 +373,16 @@
         <button id="submit-question">提交問題</button>
         <div id="response"></div>
     </div>
+    <div id="music-panel">
+        <select id="music-select">
+            <option value="宮崎駿">宮崎駿</option>
+            <option value="輕鬆悠閑">輕鬆悠閑</option>
+        </select>
+        <button id="play-pause-btn">▶</button>
+        <input type="range" id="progress-bar-music" min="0" max="100" value="0">
+        <button id="hide-music-panel">隱藏</button>
+    </div>
+    <audio id="audio-player" style="display: none;"></audio>
 
     <script>
         const manuscript = document.getElementById('manuscript');
@@ -324,6 +398,18 @@
         let currentApiKeyIndex = 0;
         const API_URL = "https://chatapi.akash.network/api/v1/chat/completions";
         const MODEL = "DeepSeek-R1";
+
+        const musicUrls = {
+            "宮崎駿": "//player.bilibili.com/player.html?isOutside=true&aid=919192153&bvid=BV17u4y1V7ub&cid=1352690388&p=1",
+            "輕鬆悠閑": "//player.bilibili.com/player.html?isOutside=true&aid=114311460619473&bvid=BV1cxduYVE1d&cid=29329983525&p=1"
+        };
+
+        const audioPlayer = document.getElementById('audio-player');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const progressBarMusic = document.getElementById('progress-bar-music');
+        const musicSelect = document.getElementById('music-select');
+        const musicPanel = document.getElementById('music-panel');
+        const hideMusicPanelBtn = document.getElementById('hide-music-panel');
 
         function getRows(page) {
             return page % 2 === 1 ? 15 : 20;
@@ -474,7 +560,7 @@
         document.getElementById('add-page').addEventListener('click', addPage);
 
         document.getElementById('save').addEventListener('click', function() {
-            const data = [];
+            const W = [];
             for (let page = 1; page <= pageCount; page++) {
                 const rows = getRows(page);
                 const cols = getCols();
@@ -976,6 +1062,47 @@
                 title.textContent = newTitle;
             });
         });
+
+        // 音樂面板功能
+        musicSelect.addEventListener('change', function() {
+            const selectedMusic = musicSelect.value;
+            // 注意：這裡假設 musicUrls 提供的是音頻 URL，由於 Bilibili iframe 無法直接提取音頻，需後端支持
+            audioPlayer.src = musicUrls[selectedMusic];
+            audioPlayer.load();
+            playPauseBtn.textContent = '▶';
+            progressBarMusic.value = 0;
+        });
+
+        playPauseBtn.addEventListener('click', function() {
+            if (audioPlayer.paused) {
+                audioPlayer.play().catch(err => console.error('播放失敗:', err));
+                playPauseBtn.textContent = '‖';
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.textContent = '▶';
+            }
+        });
+
+        audioPlayer.addEventListener('timeupdate', function() {
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBarMusic.value = progress;
+            }
+        });
+
+        progressBarMusic.addEventListener('input', function() {
+            if (audioPlayer.duration) {
+                const time = (progressBarMusic.value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = time;
+            }
+        });
+
+        hideMusicPanelBtn.addEventListener('click', function() {
+            musicPanel.classList.toggle('hidden');
+        });
+
+        // 預設載入第一首音樂
+        audioPlayer.src = musicUrls[musicSelect.value];
     </script>
 </body>
 </html>

@@ -1018,6 +1018,39 @@
             }
         }
 
+
+function autoSave() {
+    const data = [];
+    for (let page = 1; page <= pageCount; page++) {
+        const rows = getRows(page);
+        const cols = getCols();
+        const pageData = [];
+        for (let row = 1; row <= rows; row++) {
+            const rowData = [];
+            for (let col = 1; col <= cols; col++) {
+                const input = document.querySelector(
+                    `input[data-page="${page}"][data-row="${row}"][data-col="${col}"]`
+                );
+                rowData.push(input.value);
+            }
+            pageData.push(rowData);
+        }
+        data.push(pageData);
+    }
+    localStorage.setItem('manuscript', JSON.stringify(data));
+    const title = document.getElementById('title-input').value;
+    localStorage.setItem('title', title);
+    console.log('自動保存成功');
+}
+
+        // 手動儲存按鈕的事件監聽器
+    document.getElementById('save').addEventListener('click', function() {
+        autoSave();
+        alert('文章已儲存');
+    });
+
+
+        
         function generateOutlineTable() {
             const structure = document.getElementById('structure').value;
             let parts = structure === 'fourPart' ? ['起', '承', '轉', '合'] : ['起', '一線', '二線', '三線', '合'];
@@ -1507,6 +1540,11 @@
         document.getElementById('reset-timer').addEventListener('click', resetTimer);
         document.getElementById('genre-select').addEventListener('change', toggleStructureSelect);
         document.getElementById('structure-select').addEventListener('change', resetTimer);
+
+// 啟動自動儲存定時器
+    setInterval(autoSave, 60000); // 每分鐘自動儲存一次
+</script>
+        
     </script>
 
 
